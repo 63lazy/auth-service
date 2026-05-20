@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>身份认证系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .tabs {
+            display: flex;
+            background: #f8f9fa;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+            background: transparent;
+            font-size: 16px;
+            color: #666;
+        }
+
+        .tab.active {
+            background: white;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .form-container {
+            padding: 40px;
+        }
+
+        .form {
+            display: none;
+        }
+
+        .form.active {
+            display: block;
+        }
+
+        h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .message {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            display: none;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .switch-form {
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+        }
+
+        .switch-form a {
+            color: #667eea;
+            text-decoration: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .switch-form a:hover {
+            text-decoration: underline;
+        }
+
+        .login-options {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .login-option {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .login-option:hover, .login-option.active {
+            border-color: #667eea;
+            background: #f0f0ff;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        #userDashboard {
+            display: none;
+        }
+
+        .dashboard-content {
+            padding: 40px;
+        }
+
+        .user-info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .user-info h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .info-item {
+            margin-bottom: 10px;
+            color: #666;
+        }
+
+        .logout-btn {
+            background: #dc3545;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="authForms">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('login')">登录</button>
+                <button class="tab" onclick="switchTab('register')">注册</button>
+            </div>
+
+            <div class="form-container">
+                <div id="loginForm" class="form active">
+                    <h2>用户登录</h2>
+                    <div id="loginMessage" class="message"></div>
+
+                    <div class="login-options">
+                        <div class="login-option active" onclick="selectLoginMethod('password')">口令认证</div>
+                        <div class="login-option" onclick="selectLoginMethod('verification')">验证码认证</div>
+                        <div class="login-option" onclick="selectLoginMethod('signature')">数字签名认证</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>用户名</label>
+                        <input type="text" id="loginUsername" placeholder="请输入用户名">
+                    </div>
+
+                    <div id="passwordLoginGroup" class="form-group">
+                        <label>密码</label>
+                        <input type="password" id="loginPassword" placeholder="请输入密码">
+                    </div>
+
+                    <div id="verificationLoginGroup" class="form-group hidden">
+                        <label>联系方式（邮箱/手机）</label>
+                        <input type="text" id="verificationContact" placeholder="邮箱或手机号">
+                        <button type="button" onclick="requestVerificationCode()" style="margin-top: 10px; background: #28a745;">获取验证码</button>
+                    </div>
+
+                    <div id="verificationCodeGroup" class="form-group hidden">
+                        <label>验证码</label>
+                        <input type="text" id="verificationCode" placeholder="请输入验证码">
+                    </div>
+
+                    <button onclick="handleLogin()" id="loginBtn">登录</button>
+
+                    <div class="switch-form">
+                        还没有账号？<a onclick="switchTab('register')">立即注册</a>
+                    </div>
+                </div>
+
+                <div id="registerForm" class="form">
+                    <h2>用户注册</h2>
+                    <div id="registerMessage" class="message"></div>
+
+                    <div class="form-group">
+                        <label>用户名</label>
+                        <input type="text" id="regUsername" placeholder="请输入用户名">
+                    </div>
+
+                    <div class="form-group">
+                        <label>密码</label>
+                        <input type="password" id="regPassword" placeholder="请输入密码">
+                    </div>
+
+                    <div class="form-group">
+                        <label>邮箱（可选）</label>
+                        <input type="email" id="regEmail" placeholder="请输入邮箱">
+                    </div>
+
+                    <div class="form-group">
+                        <label>手机号（可选）</label>
+                        <input type="tel" id="regPhone" placeholder="请输入手机号">
+                    </div>
+
+                    <div class="form-group">
+                        <label>认证方式</label>
+                        <select id="regAuthMethod" onchange="toggleCertGeneration()">
+                            <option value="password">仅口令认证</option>
+                            <option value="verification">仅验证码认证</option>
+                            <option value="all">全部认证方式</option>
+                            <option value="signature">包含数字签名认证</option>
+                        </select>
+                    </div>
+
+                    <div id="certGenerationGroup" class="form-group hidden">
+                        <label>数字签名配置</label>
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
+                            <p style="color: #666; font-size: 14px; margin-bottom: 10px;">
+                                系统将为您生成数字签名密钥对和证书。签名私钥将使用您的密码加密存储在本地。
+                            </p>
+                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                <input type="checkbox" id="generateCert" checked style="width: auto;">
+                                <span>生成数字证书（用于数字签名认证）</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <button onclick="handleRegister()" id="registerBtn">注册</button>
+
+                    <div class="switch-form">
+                        已有账号？<a onclick="switchTab('login')">立即登录</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="userDashboard">
+            <div class="dashboard-content">
+                <h2>欢迎回来</h2>
+                <div id="dashboardMessage" class="message"></div>
+                
+                <div class="user-info">
+                    <h3>用户信息</h3>
+                    <div class="info-item">用户 ID: <span id="userId"></span></div>
+                    <div class="info-item">用户名：<span id="displayUsername"></span></div>
+                    <div class="info-item">邮箱：<span id="userEmail"></span></div>
+                    <div class="info-item">手机：<span id="userPhone"></span></div>
+                    <div class="info-item">证书状态：<span id="certStatus"></span></div>
+                </div>
+
+                <button onclick="logout()" class="logout-btn">退出登录</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
+    <script src="crypto-module.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
